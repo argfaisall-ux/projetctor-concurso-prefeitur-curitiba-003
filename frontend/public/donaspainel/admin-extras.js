@@ -1,5 +1,5 @@
 /* ============================================================
-   Painel Admin — extras (Fundação FAFIPA)
+   Painel Admin — extras (Concurso Curitiba)
    Adiciona um botão "Limpar Cadastros" na página /donaspainel/cadastro
    sem precisar mexer no build React.
    ============================================================ */
