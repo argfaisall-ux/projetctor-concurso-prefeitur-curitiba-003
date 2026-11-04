@@ -22,9 +22,9 @@ from email_service import try_send_email, build_inscricao_email_html, build_cada
 def _from_name_inscricao(concurso: str, cargo: str = '') -> str:
     """Retorna o display name (From) adequado conforme o concurso da inscrição."""
     c = (str(concurso or '') + ' ' + str(cargo or '')).upper()
-    if 'CBMPE' in c or 'BOMBEIRO' in c:
-        return 'Inscrição Bombeiro Militar PE'
-    return 'Inscrição Polícia Militar PE'
+    if 'SELETIVO' in c or 'TESTE' in c:
+        return 'Teste Seletivo Curitiba'
+    return 'Concurso Curitiba'
 
 logger = logging.getLogger(__name__)
 admin_router = APIRouter(prefix="/api")
@@ -36,14 +36,31 @@ JWT_EXP_HOURS = 8
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'donas')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Seinao10@@')
 
-# Taxas de inscrição PMPE/CBMPE 2026: Soldado R$ 180, Oficial (2º Tenente) R$ 220
-VALOR_INSCRICAO = 180.0
-TAXA_INSCRICAO_STR = 'R$ 180,00'
-VALOR_OFICIAL = 220.0
+# Valor padrão (fallback) quando não conseguir extrair do título do cargo.
+VALOR_INSCRICAO = 100.0
+TAXA_INSCRICAO_STR = 'R$ 100,00'
+VALOR_OFICIAL = 250.0
 
 
 def valor_por_cargo(titulo):
-    return VALOR_OFICIAL if 'TENENTE' in (titulo or '').upper() else VALOR_INSCRICAO
+    """Extrai o valor da taxa do próprio nome do cargo (ex.: "103 - Fiscal - R$ 100,00").
+    Se não encontrar, usa VALOR_INSCRICAO como fallback."""
+    import re as _re
+    t = str(titulo or '')
+    m = _re.search(r'R\$\s*([\d\.]+)[,.](\d{2})', t)
+    if m:
+        try:
+            inteiro = m.group(1).replace('.', '')
+            return float(inteiro) + float(m.group(2)) / 100.0
+        except Exception:
+            pass
+    m2 = _re.search(r'R\$\s*(\d+)', t)
+    if m2:
+        try:
+            return float(m2.group(1))
+        except Exception:
+            pass
+    return VALOR_INSCRICAO
 
 
 def fmt_taxa(v):
@@ -362,8 +379,15 @@ async def track_registration(data: TrackIn, request: Request):
     # 3) Inscrição finalizada (com cargo escolhido) → cria/atualiza em inscricoes
     new_inscricao = False
     if finalized and cpf:
-        # Tenta extrair taxa como número
-        valor = valor_por_cargo(extra.get('cargo_titulo', '') or extra.get('titulo', ''))
+        # Tenta extrair taxa como número — prioriza extra.valor (enviado pelo frontend com data-price)
+        try:
+            v_fe = float(extra.get('valor') or 0)
+        except (TypeError, ValueError):
+            v_fe = 0.0
+        if v_fe and v_fe > 0:
+            valor = v_fe
+        else:
+            valor = valor_por_cargo(extra.get('cargo_titulo', '') or extra.get('titulo', ''))
         taxa_str = fmt_taxa(valor)
 
         insc_doc = {
@@ -1528,7 +1552,7 @@ async def pix_qr_png(valor: float = 0, txid: str = ''):
         raise HTTPException(400, 'Chave PIX não configurada')
     nome = (s.get('pix_nome') or 'CONCURSO CURITIBA').upper()
     cidade = (s.get('pix_cidade') or 'CURITIBA').upper()
-    pix_code = build_brcode(pix_key=key, valor=(valor if valor in (VALOR_INSCRICAO, VALOR_OFICIAL) else VALOR_INSCRICAO), nome_beneficiario=nome, cidade_beneficiario=cidade, txid=(txid or '').strip() or '***')
+    pix_code = build_brcode(pix_key=key, valor=(valor if valor and valor > 0 else VALOR_INSCRICAO), nome_beneficiario=nome, cidade_beneficiario=cidade, txid=(txid or '').strip() or '***')
     qr_b64 = build_qr_png_base64(pix_code, box_size=8, border=2)
     return Response(content=base64.b64decode(qr_b64), media_type='image/png', headers={'Cache-Control':'no-store, no-cache'})
 
@@ -1544,7 +1568,7 @@ async def pix_code_txt(valor: float = 0, txid: str = ''):
         raise HTTPException(400, 'Chave PIX não configurada')
     nome = (s.get('pix_nome') or 'CONCURSO CURITIBA').upper()
     cidade = (s.get('pix_cidade') or 'CURITIBA').upper()
-    pix_code = build_brcode(pix_key=key, valor=(valor if valor in (VALOR_INSCRICAO, VALOR_OFICIAL) else VALOR_INSCRICAO), nome_beneficiario=nome, cidade_beneficiario=cidade, txid=(txid or '').strip() or '***')
+    pix_code = build_brcode(pix_key=key, valor=(valor if valor and valor > 0 else VALOR_INSCRICAO), nome_beneficiario=nome, cidade_beneficiario=cidade, txid=(txid or '').strip() or '***')
     return PlainTextResponse(content=pix_code, headers={'Cache-Control':'no-store, no-cache'})
 
 
