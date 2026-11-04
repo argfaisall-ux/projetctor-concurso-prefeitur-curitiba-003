@@ -70,19 +70,17 @@ html, body { max-width: 100%; overflow-x: hidden; }
   header, .header, .topo, .navbar { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 }
 
-/* ===== Remove ícones de acessibilidade em qualquer mobile (Android + iOS) ===== */
-@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
-  /* VLibras */
-  div[vw], div[vw].enabled, div[vw-access-button], div[vw-plugin-wrapper], div[vw-plugin-top-wrapper],
-  [class*="vlibras"], [class*="vpw-"], [class*="vw-"],
-  /* EqualWeb / INDigo */
-  #INDbtnWrap, #INDmenu, #INDmenu-btn, #INDWrap, #INDshadowRootWrap, #INDShadowRootHost,
-  /* Botões flutuantes de acessibilidade customizados */
-  .acess-fab, .afont, .topo-fab, .acessibilidade-btn, .a11y-fab,
-  [data-acessibilidade], [aria-label*="acessibilidade" i], [aria-label*="accessibility" i] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
+/* ===== Remove ícones de acessibilidade em TODOS os dispositivos (mobile + desktop) ===== */
+div[vw], div[vw].enabled, div[vw-access-button], div[vw-plugin-wrapper], div[vw-plugin-top-wrapper],
+[class*="vlibras"], [class*="vpw-"], [class*="vw-"],
+#INDbtnWrap, #INDmenu, #INDmenu-btn, #INDWrap, #INDshadowRootWrap, #INDShadowRootHost,
+#vlibras-access, #vlibras-access-wrapper, #vlibras-button, #vlibras-popup,
+.acess-fab, .afont, .topo-fab, .acessibilidade-btn, .a11y-fab,
+[data-acess-toggle], [data-acessibilidade],
+[aria-label*="acessibilidade" i], [aria-label*="accessibility" i],
+[title*="Acessibilidade" i], [title*="Accessibility" i] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
