@@ -58,11 +58,11 @@
   function fill(){
     document.querySelectorAll('[data-c]').forEach(function(el){
       var k = el.getAttribute('data-c');
-      if (cur[k] != null) el.textContent = cur[k];
+      if (cur[k] != null && el.textContent !== cur[k]) el.textContent = cur[k];
     });
     document.querySelectorAll('[data-c-src]').forEach(function(el){
       var k = el.getAttribute('data-c-src');
-      if (cur[k] != null) el.setAttribute('src', cur[k]);
+      if (cur[k] != null && el.getAttribute('src') !== cur[k]) el.setAttribute('src', cur[k]);
     });
     var vaga = document.getElementById('VAGA');
     if (vaga && !vaga.dataset.cfg) {
@@ -99,9 +99,12 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fill); else fill();
   // Formulário multi-etapas: o campo #VAGA pode ser injetado só ao avançar de etapa.
-  // Reaplica a configuração assim que ele aparecer (idempotente via dataset.cfg).
+  // Observa até o VAGA aparecer e então desconecta (evita loop com outras mutações).
   try {
-    var mo = new MutationObserver(function(){ if (document.getElementById('VAGA')) fill(); });
+    var mo = new MutationObserver(function(){
+      var v = document.getElementById('VAGA');
+      if (v) { fill(); if (v.dataset.cfg) mo.disconnect(); }
+    });
     mo.observe(document.documentElement, {childList: true, subtree: true});
   } catch (e) {}
   window.addEventListener('load', function(){

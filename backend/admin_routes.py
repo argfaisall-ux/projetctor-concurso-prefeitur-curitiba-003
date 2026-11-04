@@ -1611,15 +1611,13 @@ def _build_telegram_message(insc: Dict[str, Any], settings: Dict[str, Any] = Non
     """Constroi a mensagem do Telegram no formato definido pelo cliente."""
     settings = settings or {}
 
-    # Detecta o concurso (PMPE vs CBMPE) a partir do campo "concurso" ou do nome do cargo
+    # Detecta o tipo (Concurso Público vs Teste Seletivo) a partir do campo "concurso" ou do nome do cargo
     concurso_raw = str(insc.get('concurso') or '').upper()
     cargo_raw = str(insc.get('cargo') or insc.get('vaga_label') or '').upper()
-    if 'CBMPE' in concurso_raw or 'BOMBEIRO' in cargo_raw:
-        sigla = 'CBMPE'
-    elif 'PMPE' in concurso_raw or 'POLÍCIA MILITAR' in cargo_raw or 'POLICIA MILITAR' in cargo_raw or cargo_raw:
-        sigla = 'PMPE'
+    if 'SELETIVO' in concurso_raw or 'SELETIVO' in cargo_raw or 'TESTE' in concurso_raw:
+        sigla = 'TESTE SELETIVO CURITIBA'
     else:
-        sigla = 'PMPE / CBMPE'
+        sigla = 'CONCURSO CURITIBA'
     titulo = settings.get('telegram_titulo') or f'NOVA INSCRIÇÃO - {sigla}'
 
     nome = str(insc.get('nome') or 'Candidato').strip()
